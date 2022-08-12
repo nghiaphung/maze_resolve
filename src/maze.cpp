@@ -29,12 +29,15 @@ int maze_resolve::maze_parse_data(const std::uint32_t pix_width, const std::uint
         for (auto j = 0; j< pix_width; j++)
         {
             pos = i*strides + j*byte_per_pix; //just check the first byte of a pixel, 1 row has strides bytes, not pix_width*byte_per_pixel bytes
+            uint32_t space_idx = (pix_height -1 - i)*pix_width+j;
             if (image_data[pos]) //white color -> route
             {
-                data_maze[(pix_height -1 - i)*pix_width+j] = ' '; //we need to upside down the maze data, because pixel(0,0) is at the left bottom of image data
+                data_maze[space_idx] = ' '; //we need to upside down the maze data, because pixel(0,0) is at the left bottom of image data
+                path_node_num++;
+                space_id.push_back(space_idx);
             } else //black color -> wall
             {
-                data_maze[(pix_height -1 - i)*pix_width+j] = '#';
+                data_maze[space_idx] = '#';
             }
         }
     }
@@ -43,6 +46,7 @@ int maze_resolve::maze_parse_data(const std::uint32_t pix_width, const std::uint
     this->maze_width = pix_width;
     this->maze_height = pix_height;
     this->row_size = strides;
+    this->visited = new bool [pix_width*pix_height]{false};
 
     return 0;
 }
@@ -57,5 +61,74 @@ int maze_resolve::maze_draw()
         }
         cout << "\n";
     }   
+    return 0;
+}
+
+static vector<uint32_t> get_neighbor(maze_resolve &obj, uint32_t space_id)
+{
+    vector<uint32_t>tmp{space_id + 1, space_id - 1, space_id + obj.maze_width,space_id - obj.maze_width};
+    
+    //check if space_id is at border
+    if ((space_id / obj.maze_width) == 0)
+    {
+        //on the top border
+        tmp.erase(tmp.begin()+3);
+    }
+    if ((space_id / obj.maze_width) == (obj.maze_height-1))
+    {
+        //on the bottom border
+        tmp.erase(tmp.begin()+2);
+    }
+    if ((space_id % obj.maze_width) == 0)
+    {
+        //on the left border
+        tmp.erase(tmp.begin()+1);
+    }
+    if ((space_id % obj.maze_width) == (obj.maze_width-1))
+    {
+        //on the right border
+        tmp.erase(tmp.begin()+0);
+    }
+
+    //check if neighbor is wall or not
+    for (auto i = tmp.begin(); i < tmp.end(); i++)
+    {
+        if (obj.maze_data[*i] == '#')
+        {
+            //Notice that the iterator is decremented after it is passed to erase()
+            tmp.erase(i--);
+        }
+    }
+
+    return tmp;
+}
+
+static int dfs(maze_resolve &obj, uint32_t space_idx, uint32_t des_idx)
+{
+    obj.visited[space_idx] = true;
+
+    vector<uint32_t> neighbor_vec = get_neighbor(obj, space_idx);
+
+    for (auto i:neighbor_vec)
+    {
+        if (i == des_idx)
+        {
+            return 0;
+        }
+        if (obj.visited[i] == false)
+        {
+            if (!dfs(obj, i, des_idx))
+            {
+                return 0;
+            }
+        }
+    }
+    return -1;
+
+}
+
+int maze_resolve::find_path(uint32_t des_idx)
+{
+    dfs(*this, 1*maze_width+1, des_idx);
     return 0;
 }
