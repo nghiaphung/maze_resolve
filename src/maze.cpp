@@ -33,8 +33,6 @@ int maze_resolve::maze_parse_data(const std::uint32_t pix_width, const std::uint
             if (image_data[pos]) //white color -> space
             {
                 data_maze[space_idx] = ' '; //we need to upside down the maze data, because pixel(0,0) is at the left bottom of image data
-                path_node_num++;
-                space_id.push_back(space_idx);
             } else //black color -> wall
             {
                 data_maze[space_idx] = '#';
@@ -103,32 +101,86 @@ static vector<uint32_t> get_neighbor(maze_resolve &obj, uint32_t space_id)
     return tmp;
 }
 
-static int dfs(maze_resolve &obj, uint32_t space_idx, uint32_t des_idx)
+static int is_next_move_possible(maze_resolve &obj, vector<uint32_t> neighbor)
 {
-    obj.visited[space_idx] = true;
-
-    vector<uint32_t> neighbor_vec = get_neighbor(obj, space_idx);
-
-    for (auto i:neighbor_vec)
+    for (auto i: neighbor)
     {
-        if (i == des_idx)
-        {
-            return 0;
-        }
         if (obj.visited[i] == false)
+            return 1;
+    }
+    return 0;
+}
+
+uint32_t get_next_possible_move(maze_resolve &obj, uint32_t current_idx)
+{
+    vector<uint32_t> neighbor_vec = get_neighbor(obj, current_idx);
+    for (auto i: neighbor_vec)
+    {
+        if (obj.visited[i] == false)
+            return i;
+    }
+    //should not reach here
+    return 0;
+
+}
+
+static int dfs(maze_resolve &obj, uint32_t des_idx)
+{
+    stack<uint32_t> path_found{};
+    uint32_t current_idx = obj.start_x*obj.maze_width + obj.start_y;
+    path_found.push(current_idx);
+    obj.visited[current_idx] = true;
+
+    while (current_idx != des_idx)
+    {
+        vector<uint32_t> neighbor_vec = get_neighbor(obj, current_idx);
+        if (is_next_move_possible(obj, neighbor_vec))
         {
-            if (!dfs(obj, i, des_idx))
+            current_idx = get_next_possible_move(obj, current_idx);
+            obj.visited[current_idx] = true;
+            path_found.push(current_idx);
+        } else
+        {
+            path_found.pop();
+            current_idx = path_found.top();
+            if (path_found.size() <= 1)
             {
+                //returned to start idx => cannot find path
                 return 0;
             }
         }
     }
-    return -1;
+    //store path
+    obj.path = path_found;
+
+    return 1;
 
 }
 
 int maze_resolve::find_path(uint32_t des_idx)
 {
-    dfs(*this, start_x*maze_width+start_y, des_idx);
-    return 0;
+    return dfs(*this, des_idx);
+}
+
+void maze_resolve::print_path()
+{
+    if (path.size() <= 1)
+    {
+        cout << "No path found\n";
+    } else
+    {
+        uint32_t idx = path.top();
+        maze_data[idx] = 'F'; //mark finish point
+        path.pop();
+        for (auto i = path.size(); i > 1; i--)
+        {
+            idx = path.top();
+            maze_data[idx] = '.'; //mark route
+            path.pop();
+        }
+            idx = path.top();
+            maze_data[idx] = 'S'; //start finish point
+
+            maze_draw();
+    }
 }

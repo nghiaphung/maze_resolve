@@ -24,8 +24,8 @@ int main(int argc, char**argv)
 		return 0;
 	}
 
-	if (maze_bmp.read_header() == -1)
-		return -1;
+	if (maze_bmp.read_header() == 0)
+		return 0;
 
 	// maze_bmp.dump_header_info();
 	maze_bmp.read_image_data();
@@ -33,7 +33,13 @@ int main(int argc, char**argv)
 	maze.maze_parse_data(maze_bmp.info_header->pixel_width, maze_bmp.info_header->pixel_height, 
 	      maze_bmp.info_header->bpp, maze_bmp.image_data);
 	
-	maze.maze_draw();
+	if (!maze.find_path(1521))
+	{
+		cout << "No path found\n";
+		return 0;
+	}
+	// maze.maze_draw();
+	maze.print_path();
 
 	return 0;
 

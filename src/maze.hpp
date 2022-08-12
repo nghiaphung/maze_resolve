@@ -2,6 +2,7 @@
 #define _MAZE_H_
 
 #include <vector>
+#include <stack>
 
 struct maze_resolve
 {
@@ -13,9 +14,7 @@ struct maze_resolve
     std::uint32_t maze_height{0};
     char * maze_data{nullptr};
     std::uint32_t row_size{0};
-    std::uint32_t path_node_num{0};
-    std::vector<std::uint32_t> space_id{}; //maze includes wall and space
-    std::vector<std::vector<std::uint32_t>> path{};
+    std::stack<std::uint32_t> path{};
     bool * visited{nullptr};
 
     maze_resolve() = default;
@@ -29,6 +28,7 @@ struct maze_resolve
     int maze_parse_data(const std::uint32_t pix_width, const std::uint32_t pix_height, 
                     const std::uint8_t bpp, const std::uint8_t *image_data);
     int find_path(uint32_t des_idx);
+    void print_path();
 };
 
 #endif

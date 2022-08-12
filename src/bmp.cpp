@@ -68,7 +68,7 @@ int bmp::read_header()
         cout << "BMP info header is not in support type\n";
         delete file_header;
         delete info_header;
-        return -1;
+        return 0;
     }
 
     //Bug fix: swap data_size
@@ -98,7 +98,7 @@ int bmp::read_header()
 
     this->file_header = file_header;
     this->info_header = info_header;
-    return 0;
+    return 1;
 };
 
 int bmp::read_image_data()
@@ -106,7 +106,7 @@ int bmp::read_image_data()
     if ((this->file_header->pixel_offset == 0) && (this->info_header->data_size == 0))
     {
         cout << "No image info in header\n";
-        return -1;
+        return 0;
     }
 
     uint8_t * data = new uint8_t [this->info_header->data_size];
@@ -120,7 +120,7 @@ int bmp::read_image_data()
 
     this->image_data = data;
 
-    return 0;
+    return 1;
 }
 
 void bmp::dump_header_info()
