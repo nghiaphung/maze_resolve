@@ -23,14 +23,14 @@ int maze_resolve::maze_parse_data(const std::uint32_t pix_width, const std::uint
     // Detail: in image_data, each pixel has bpp/8 bytes per pixel, for now, we treat the image just has black and while color,
     // it means data pixel will be just 0 (black) and non-zero (white), and we just read the first byte to determine the color
     // black : wall
-    // while : route
+    // while : space
     for (auto i = 0; i < pix_height; i++)
     {
         for (auto j = 0; j< pix_width; j++)
         {
             pos = i*strides + j*byte_per_pix; //just check the first byte of a pixel, 1 row has strides bytes, not pix_width*byte_per_pixel bytes
             uint32_t space_idx = (pix_height -1 - i)*pix_width+j;
-            if (image_data[pos]) //white color -> route
+            if (image_data[pos]) //white color -> space
             {
                 data_maze[space_idx] = ' '; //we need to upside down the maze data, because pixel(0,0) is at the left bottom of image data
                 path_node_num++;
@@ -129,6 +129,6 @@ static int dfs(maze_resolve &obj, uint32_t space_idx, uint32_t des_idx)
 
 int maze_resolve::find_path(uint32_t des_idx)
 {
-    dfs(*this, 1*maze_width+1, des_idx);
+    dfs(*this, start_x*maze_width+start_y, des_idx);
     return 0;
 }
